@@ -1,4 +1,91 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Grit Todo
+
+Next.js와 TypeScript로 만든 현대적인 할 일 관리 애플리케이션입니다.
+
+## 기술 스택
+
+- **Frontend**: Next.js 14, React 18, TypeScript
+- **Styling**: Tailwind CSS
+- **Database**: Supabase
+- **Authentication**: Supabase Auth
+- **UI Components**: shadcn/ui
+
+## Supabase 설정
+
+이 프로젝트를 실행하기 전에 Supabase 설정이 필요합니다:
+
+### 1. Supabase 프로젝트 생성
+
+1. [Supabase](https://supabase.com)에 가입하고 새 프로젝트를 생성합니다
+2. 프로젝트 설정에서 API 키들을 확인합니다
+
+### 2. 환경 변수 설정
+
+프로젝트 루트에 `.env.local` 파일을 생성하고 다음 내용을 추가하세요:
+
+```bash
+# Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+# Supabase Service Role Key (for server-side operations)
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+```
+
+### 3. 데이터베이스 테이블 생성
+
+Supabase SQL Editor에서 다음 SQL을 실행하여 필요한 테이블을 생성하세요:
+
+```sql
+-- Create todos table
+CREATE TABLE todos (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  title TEXT NOT NULL,
+  description TEXT,
+  completed BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE
+);
+
+-- Create profiles table
+CREATE TABLE profiles (
+  id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
+  email TEXT NOT NULL,
+  full_name TEXT,
+  avatar_url TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Enable Row Level Security
+ALTER TABLE todos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+
+-- Create RLS policies
+CREATE POLICY "Users can view their own todos" ON todos
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert their own todos" ON todos
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own todos" ON todos
+  FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own todos" ON todos
+  FOR DELETE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can view their own profile" ON profiles
+  FOR SELECT USING (auth.uid() = id);
+
+CREATE POLICY "Users can update their own profile" ON profiles
+  FOR UPDATE USING (auth.uid() = id);
+
+CREATE POLICY "Users can insert their own profile" ON profiles
+  FOR INSERT WITH CHECK (auth.uid() = id);
+```
+
+## Getting Started
 
 ## Getting Started
 
