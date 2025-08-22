@@ -43,9 +43,13 @@ CREATE TABLE todos (
   title TEXT NOT NULL,
   description TEXT,
   completed BOOLEAN DEFAULT FALSE,
+  priority TEXT DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high')),
+  due_date TIMESTAMP WITH TIME ZONE,
+  tags TEXT[],
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  is_shared BOOLEAN DEFAULT FALSE
 );
 
 -- Create profiles table

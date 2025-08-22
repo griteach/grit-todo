@@ -1,41 +1,22 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase/utils";
+import { useAuthStore } from "@/stores/auth-store";
 import { Button } from "./button";
 
 export function Navigation() {
   const pathname = usePathname();
-  const [user, setUser] = useState<{ email?: string } | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading, signOut, checkAuth } = useAuthStore();
 
+  // 컴포넌트 마운트 시 인증 상태 확인
   useEffect(() => {
-    // 현재 사용자 정보 가져오기
-    const getUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      setUser(user);
-      setLoading(false);
-    };
-
-    getUser();
-
-    // 인증 상태 변경 감지
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+    checkAuth();
+  }, [checkAuth]);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    await signOut();
     window.location.href = "/";
   };
 
@@ -70,7 +51,13 @@ export function Navigation() {
               소개
             </Link>
 
-            {!loading && (
+            {/* 로딩 중일 때는 스켈레톤 UI 표시 */}
+            {loading ? (
+              <div className="flex items-center space-x-3">
+                <div className="w-16 h-8 bg-gray-200 rounded animate-pulse"></div>
+                <div className="w-20 h-8 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+            ) : (
               <>
                 {user ? (
                   <>
@@ -99,14 +86,21 @@ export function Navigation() {
                   </>
                 ) : (
                   <div className="flex items-center space-x-3">
-                    <Link href="/auth/login">
-                      <Button variant="outline" size="sm">
-                        로그인
-                      </Button>
-                    </Link>
-                    <Link href="/auth/signup">
-                      <Button size="sm">회원가입</Button>
-                    </Link>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      asChild
+                      className="text-gray-900 border-gray-300 hover:bg-gray-50"
+                    >
+                      <Link href="/auth/login">로그인</Link>
+                    </Button>
+                    <Button
+                      size="sm"
+                      asChild
+                      className="bg-blue-600 text-white hover:bg-blue-700"
+                    >
+                      <Link href="/auth/signup">회원가입</Link>
+                    </Button>
                   </div>
                 )}
               </>

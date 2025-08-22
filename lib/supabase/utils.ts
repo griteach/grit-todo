@@ -13,11 +13,14 @@ export type ProfileUpdate = Database["public"]["Tables"]["profiles"]["Update"];
 export const supabase = createClient();
 
 // Todo functions
-export async function getTodos(userId: string) {
+export async function getTodos(userId: string, isShared: boolean = false) {
   const { data, error } = await supabase
     .from("todos")
     .select("*")
     .eq("user_id", userId)
+    .eq("is_shared", isShared)
+    .order("priority", { ascending: false })
+    .order("due_date", { ascending: true })
     .order("created_at", { ascending: false });
 
   if (error) throw error;
@@ -27,7 +30,11 @@ export async function getTodos(userId: string) {
 export async function createTodo(todo: TodoInsert) {
   const { data, error } = await supabase
     .from("todos")
-    .insert(todo)
+    .insert({
+      ...todo,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
     .select()
     .single();
 
@@ -51,6 +58,18 @@ export async function deleteTodo(id: string) {
   const { error } = await supabase.from("todos").delete().eq("id", id);
 
   if (error) throw error;
+}
+
+export async function toggleTodoComplete(id: string, completed: boolean) {
+  const { data, error } = await supabase
+    .from("todos")
+    .update({ completed, updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
 }
 
 // Profile functions

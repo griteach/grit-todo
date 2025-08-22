@@ -1,46 +1,40 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { supabase } from "@/lib/supabase/utils";
+import { useAuthStore } from "@/stores/auth-store";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+
+  const { signIn, loading, error, clearError } = useAuthStore();
+
+  // 에러가 있으면 5초 후 자동으로 지우기
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        clearError();
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [error, clearError]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
 
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+    const result = await signIn(email, password);
 
-      if (error) {
-        setError(error.message);
-        return;
-      }
-
-      if (data.user) {
-        // 로그인 성공 시 dashboard로 리다이렉트
-        router.push("/dashboard");
-        router.refresh();
-      }
-    } catch {
-      setError("로그인 중 오류가 발생했습니다.");
-    } finally {
-      setLoading(false);
+    if (result.success) {
+      // 로그인 성공 시 dashboard로 리다이렉트
+      router.push("/dashboard");
+      router.refresh();
     }
   };
 

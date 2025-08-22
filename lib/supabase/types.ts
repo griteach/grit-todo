@@ -15,27 +15,39 @@ export interface Database {
           title: string;
           description: string | null;
           completed: boolean;
+          priority: "low" | "medium" | "high";
+          due_date: string | null;
+          tags: string[] | null;
           created_at: string;
           updated_at: string;
           user_id: string;
+          is_shared: boolean;
         };
         Insert: {
           id?: string;
           title: string;
           description?: string | null;
           completed?: boolean;
+          priority?: "low" | "medium" | "high";
+          due_date?: string | null;
+          tags?: string[] | null;
           created_at?: string;
           updated_at?: string;
           user_id: string;
+          is_shared?: boolean;
         };
         Update: {
           id?: string;
           title?: string;
           description?: string | null;
           completed?: boolean;
+          priority?: "low" | "medium" | "high";
+          due_date?: string | null;
+          tags?: string[] | null;
           created_at?: string;
           updated_at?: string;
           user_id?: string;
+          is_shared?: boolean;
         };
       };
       profiles: {

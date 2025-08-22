@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { TodoList } from "@/components/todo/todo-list";
+import { TodoForm } from "@/components/todo/todo-form";
 
 export default async function Dashboard() {
   const supabase = createClient();
@@ -29,7 +31,7 @@ export default async function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white p-6 rounded-lg shadow-sm border">
             <div className="flex items-center">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
                 <svg
                   className="w-6 h-6 text-blue-600"
                   fill="none"
@@ -53,7 +55,7 @@ export default async function Dashboard() {
 
           <div className="bg-white p-6 rounded-lg shadow-sm border">
             <div className="flex items-center">
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
                 <svg
                   className="w-6 h-6 text-green-600"
                   fill="none"
@@ -79,7 +81,7 @@ export default async function Dashboard() {
 
           <div className="bg-white p-6 rounded-lg shadow-sm border">
             <div className="flex items-center">
-              <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+              <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mb-4">
                 <svg
                   className="w-6 h-6 text-yellow-600"
                   fill="none"
@@ -102,38 +104,62 @@ export default async function Dashboard() {
           </div>
         </div>
 
-        {/* 할 일 목록 섹션 */}
-        <div className="bg-white rounded-lg shadow-sm border">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-medium text-gray-900">할 일 목록</h2>
-              <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
-                새 할 일 추가
-              </button>
+        {/* Todo List 섹션 - Vertical로 나누어 표시 */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* 왼쪽: 개인용 Todo List */}
+          <div className="bg-white rounded-lg shadow-sm border">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-medium text-gray-900">
+                  개인 할 일
+                </h2>
+                <TodoForm userId={user.id} />
+              </div>
+            </div>
+
+            <div className="p-6">
+              <TodoList userId={user.id} isShared={false} />
             </div>
           </div>
 
-          <div className="p-6">
-            <div className="text-center text-gray-500 py-8">
-              <svg
-                className="mx-auto h-12 w-12 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                />
-              </svg>
-              <h3 className="mt-2 text-sm font-medium text-gray-900">
-                할 일이 없습니다
-              </h3>
-              <p className="mt-1 text-sm text-gray-500">
-                새로운 할 일을 추가해보세요!
-              </p>
+          {/* 오른쪽: 공유 Todo List (준비 중) */}
+          <div className="bg-white rounded-lg shadow-sm border">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-medium text-gray-900">
+                  공유 할 일
+                </h2>
+                <button
+                  className="bg-gray-400 text-white px-4 py-2 rounded-lg text-sm font-medium cursor-not-allowed"
+                  disabled
+                >
+                  준비 중
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6">
+              <div className="text-center text-gray-500 py-8">
+                <svg
+                  className="mx-auto h-12 w-12 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                  />
+                </svg>
+                <h3 className="mt-2 text-sm font-medium text-gray-900">
+                  공유 기능 준비 중
+                </h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  곧 팀과 함께 할 일을 공유할 수 있습니다!
+                </p>
+              </div>
             </div>
           </div>
         </div>
