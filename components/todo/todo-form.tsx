@@ -14,7 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { supabase } from "@/lib/supabase/utils";
+import { createTodo } from "@/lib/supabase/utils";
 import type { TodoInsert } from "@/lib/supabase/utils";
 
 interface TodoFormProps {
@@ -38,6 +38,10 @@ export function TodoForm({ userId, onTodoCreated }: TodoFormProps) {
 
     if (!formData.title.trim()) return;
 
+    console.log("TodoForm - handleSubmit 시작");
+    console.log("TodoForm - formData:", formData);
+    console.log("TodoForm - userId:", userId);
+
     setLoading(true);
     try {
       const tags = formData.tags
@@ -55,7 +59,12 @@ export function TodoForm({ userId, onTodoCreated }: TodoFormProps) {
         is_shared: false,
       };
 
-      await supabase.from("todos").insert(todoData);
+      console.log("TodoForm - todoData 생성:", todoData);
+      console.log("TodoForm - createTodo 호출 전");
+
+      console.log("TodoForm - createTodo 호출 후");
+      const result = await createTodo(todoData);
+      console.log("TodoForm - createTodo 성공:", result);
 
       // 폼 초기화
       setFormData({
@@ -66,11 +75,16 @@ export function TodoForm({ userId, onTodoCreated }: TodoFormProps) {
         tags: "",
       });
 
+      console.log("TodoForm - 폼 초기화 완료");
       setOpen(false);
+      console.log("TodoForm - Dialog 닫기");
       onTodoCreated?.();
+      console.log("TodoForm - onTodoCreated 호출");
     } catch (error) {
-      console.error("Todo 생성 오류:", error);
+      console.error("TodoForm - Todo 생성 오류:", error);
+      alert("할 일 추가 중 오류가 발생했습니다. 다시 시도해주세요.");
     } finally {
+      console.log("TodoForm - finally 블록 실행, loading false");
       setLoading(false);
     }
   };

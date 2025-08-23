@@ -18,6 +18,7 @@ export function Navigation({ initialUser }: NavigationProps) {
 
   // 디버깅: store 상태 확인
   console.log("Navigation - useAuthStore 상태:", { user, loading });
+  console.log("Navigation - initialUser:", initialUser);
 
   // 초기 사용자 정보가 있으면 로딩 상태를 false로 강제 설정
   const isActuallyLoading = initialUser ? false : loading;

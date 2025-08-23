@@ -142,12 +142,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   checkAuth: async () => {
     try {
+      console.log("checkAuth 시작...");
       set({ loading: true });
 
       const {
         data: { user },
         error,
       } = await supabase.auth.getUser();
+
+      console.log("checkAuth - supabase.auth.getUser() 결과:", { user, error });
 
       if (error) {
         console.error("인증 확인 오류:", error);
@@ -156,8 +159,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
 
       if (user) {
+        console.log("checkAuth - 사용자 발견, 상태 설정...");
         set({ user, loading: false, error: null });
       } else {
+        console.log("checkAuth - 사용자 없음, null로 설정...");
         set({ user: null, loading: false });
       }
     } catch (err) {

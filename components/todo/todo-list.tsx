@@ -44,7 +44,7 @@ export function TodoList({ userId, isShared }: TodoListProps) {
 
   useEffect(() => {
     loadTodos();
-  }, [userId, isShared, loadTodos]);
+  }, [loadTodos]);
 
   const handleTodoUpdate = (updatedTodo: Todo) => {
     setTodos((prev) =>

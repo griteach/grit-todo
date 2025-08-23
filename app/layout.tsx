@@ -26,18 +26,23 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const supabase = createClient();
-  
+
   // 서버 사이드에서 사용자 정보 가져오기
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  // 디버깅: 서버에서 가져온 사용자 정보 확인
+  console.log("Layout - 서버에서 가져온 user:", user);
 
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Navigation initialUser={user ? { id: user.id, email: user.email } : null} />
+        <Navigation
+          initialUser={user ? { id: user.id, email: user.email } : null}
+        />
         {children}
       </body>
     </html>

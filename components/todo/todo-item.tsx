@@ -28,17 +28,22 @@ const priorityLabels = {
 
 export function TodoItem({ todo, onUpdate, onDelete }: TodoItemProps) {
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState(todo.title);
+  const [editDescription, setEditDescription] = useState(
+    todo.description || ""
+  );
 
   const handleToggleComplete = async () => {
     if (isUpdating) return;
-    
+
     setIsUpdating(true);
     try {
       const updatedTodo = await supabase
         .from("todos")
-        .update({ 
+        .update({
           completed: !todo.completed,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
         .eq("id", todo.id)
         .select()
@@ -54,9 +59,36 @@ export function TodoItem({ todo, onUpdate, onDelete }: TodoItemProps) {
     }
   };
 
+  const handleSaveEdit = async () => {
+    if (isUpdating || !editTitle.trim()) return;
+
+    setIsUpdating(true);
+    try {
+      const updatedTodo = await supabase
+        .from("todos")
+        .update({
+          title: editTitle.trim(),
+          description: editDescription.trim() || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", todo.id)
+        .select()
+        .single();
+
+      if (updatedTodo.data) {
+        onUpdate(updatedTodo.data);
+        setIsEditing(false);
+      }
+    } catch (error) {
+      console.error("Todo 수정 오류:", error);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const handleDelete = async () => {
     if (isUpdating) return;
-    
+
     if (confirm("정말로 이 할 일을 삭제하시겠습니까?")) {
       setIsUpdating(true);
       try {
@@ -79,91 +111,186 @@ export function TodoItem({ todo, onUpdate, onDelete }: TodoItemProps) {
   };
 
   return (
-    <Card className={`transition-all duration-200 hover:shadow-md ${
-      todo.completed ? "opacity-75 bg-gray-50" : ""
-    }`}>
+    <Card
+      className={`transition-all duration-200 hover:shadow-md ${
+        todo.completed ? "opacity-75 bg-gray-50" : ""
+      }`}
+    >
       <CardContent className="p-4">
-        <div className="flex items-start space-x-3">
-          <Checkbox
-            checked={todo.completed}
-            onCheckedChange={handleToggleComplete}
-            disabled={isUpdating}
-            className="mt-1"
-          />
-          
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between">
-              <div className="flex-1 min-w-0">
-                <h3 className={`text-sm font-medium ${
-                  todo.completed ? "line-through text-gray-500" : "text-gray-900"
-                }`}>
-                  {todo.title}
-                </h3>
-                
-                {todo.description && (
-                  <p className={`text-xs mt-1 ${
-                    todo.completed ? "text-gray-400" : "text-gray-600"
-                  }`}>
-                    {todo.description}
-                  </p>
-                )}
-                
-                <div className="flex items-center space-x-2 mt-2">
-                  <Badge 
-                    variant="secondary" 
-                    className={`text-xs ${priorityColors[todo.priority]}`}
-                  >
-                    {priorityLabels[todo.priority]}
-                  </Badge>
-                  
-                  {todo.due_date && (
-                    <Badge variant="outline" className="text-xs">
-                      📅 {formatDate(todo.due_date)}
-                    </Badge>
-                  )}
-                  
-                  {todo.tags && todo.tags.length > 0 && (
-                    <div className="flex space-x-1">
-                      {todo.tags.slice(0, 2).map((tag, index) => (
-                        <Badge key={index} variant="outline" className="text-xs">
-                          #{tag}
-                        </Badge>
-                      ))}
-                      {todo.tags.length > 2 && (
-                        <Badge variant="outline" className="text-xs">
-                          +{todo.tags.length - 2}
-                        </Badge>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-              
-              <div className="flex items-center space-x-1 ml-2">
+        {isEditing ? (
+          // Edit 모드
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-medium text-gray-900">할 일 수정</h3>
+              <div className="flex items-center space-x-2">
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
-                  onClick={handleDelete}
-                  disabled={isUpdating}
-                  className="h-6 w-6 p-0 text-gray-400 hover:text-red-500"
+                  onClick={() => {
+                    setIsEditing(false);
+                    setEditTitle(todo.title);
+                    setEditDescription(todo.description || "");
+                  }}
+                  className="h-7 px-2 text-xs"
                 >
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
+                  취소
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleSaveEdit}
+                  disabled={isUpdating || !editTitle.trim()}
+                  className="h-7 px-2 text-xs"
+                >
+                  저장
                 </Button>
               </div>
             </div>
-            
-            <div className="text-xs text-gray-400 mt-2">
-              {new Date(todo.created_at).toLocaleDateString("ko-KR", {
-                month: "short",
-                day: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
+
+            <div className="space-y-2">
+              <input
+                type="text"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                placeholder="할 일 제목"
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <textarea
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                placeholder="설명 (선택사항)"
+                rows={2}
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              />
             </div>
           </div>
-        </div>
+        ) : (
+          // View 모드
+          <div className="flex items-start space-x-3">
+            <Checkbox
+              checked={todo.completed}
+              onCheckedChange={handleToggleComplete}
+              disabled={isUpdating}
+              className="mt-1"
+            />
+
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start justify-between">
+                <div className="flex-1 min-w-0">
+                  <h3
+                    className={`text-sm font-medium ${
+                      todo.completed
+                        ? "line-through text-gray-500"
+                        : "text-gray-900"
+                    }`}
+                  >
+                    {todo.title}
+                  </h3>
+
+                  {todo.description && (
+                    <p
+                      className={`text-xs mt-1 ${
+                        todo.completed ? "text-gray-400" : "text-gray-600"
+                      }`}
+                    >
+                      {todo.description}
+                    </p>
+                  )}
+
+                  <div className="flex items-center space-x-2 mt-2">
+                    <Badge
+                      variant="secondary"
+                      className={`text-xs ${priorityColors[todo.priority]}`}
+                    >
+                      {priorityLabels[todo.priority]}
+                    </Badge>
+
+                    {todo.due_date && (
+                      <Badge variant="outline" className="text-xs">
+                        📅 {formatDate(todo.due_date)}
+                      </Badge>
+                    )}
+
+                    {todo.tags && todo.tags.length > 0 && (
+                      <div className="flex space-x-1">
+                        {todo.tags.slice(0, 2).map((tag, index) => (
+                          <Badge
+                            key={index}
+                            variant="outline"
+                            className="text-xs"
+                          >
+                            #{tag}
+                          </Badge>
+                        ))}
+                        {todo.tags.length > 2 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{todo.tags.length - 2}
+                          </Badge>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-1 ml-2">
+                  {/* Edit 버튼 */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsEditing(true)}
+                    disabled={isUpdating}
+                    className="h-6 w-6 p-0 text-gray-400 hover:text-blue-500"
+                  >
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                      />
+                    </svg>
+                  </Button>
+
+                  {/* Delete 버튼 */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleDelete}
+                    disabled={isUpdating}
+                    className="h-6 w-6 p-0 text-gray-400 hover:text-red-500"
+                  >
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1 1v3M4 7h16"
+                      />
+                    </svg>
+                  </Button>
+                </div>
+              </div>
+
+              <div className="text-xs text-gray-400 mt-2">
+                {new Date(todo.created_at).toLocaleDateString("ko-KR", {
+                  month: "short",
+                  day: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </div>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

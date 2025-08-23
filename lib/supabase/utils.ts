@@ -28,18 +28,32 @@ export async function getTodos(userId: string, isShared: boolean = false) {
 }
 
 export async function createTodo(todo: TodoInsert) {
-  const { data, error } = await supabase
-    .from("todos")
-    .insert({
-      ...todo,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
-    .select()
-    .single();
+  console.log("createTodo 호출됨, 파라미터:", todo);
+  
+  try {
+    const { data, error } = await supabase
+      .from("todos")
+      .insert({
+        ...todo,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .select()
+      .single();
 
-  if (error) throw error;
-  return data;
+    console.log("createTodo 결과:", { data, error });
+
+    if (error) {
+      console.error("createTodo 에러:", error);
+      throw error;
+    }
+    
+    console.log("createTodo 성공:", data);
+    return data;
+  } catch (err) {
+    console.error("createTodo 예외 발생:", err);
+    throw err;
+  }
 }
 
 export async function updateTodo(id: string, updates: TodoUpdate) {
