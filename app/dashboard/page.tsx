@@ -1,8 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { TodoList } from "@/components/todo/todo-list";
-import { TodoForm } from "@/components/todo/todo-form";
-import { ViewToggleButtons } from "@/components/todo/view-toggle-buttons";
+import { TodoSection } from "@/components/todo/todo-section";
 
 export default async function Dashboard() {
   const supabase = createClient();
@@ -109,22 +107,7 @@ export default async function Dashboard() {
         </div>
 
         {/* Todo List 섹션 - 전체 너비 사용 */}
-        <div className="bg-white rounded-lg shadow-sm border">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-medium text-gray-900">개인 할 일</h2>
-              <div className="flex items-center space-x-3">
-                {/* 뷰 모드 전환 버튼들 */}
-                <ViewToggleButtons />
-                <TodoForm userId={user.id} />
-              </div>
-            </div>
-          </div>
-
-          <div className="p-6">
-            <TodoList userId={user.id} isShared={false} />
-          </div>
-        </div>
+        <TodoSection userId={user.id} isShared={false} />
       </div>
     </div>
   );
