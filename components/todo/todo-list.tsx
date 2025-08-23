@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { TodoItem } from "./todo-item";
 import { supabase } from "@/lib/supabase/utils";
 import type { Todo } from "@/lib/supabase/utils";
@@ -15,11 +15,7 @@ export function TodoList({ userId, isShared }: TodoListProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadTodos();
-  }, [userId, isShared]);
-
-  const loadTodos = async () => {
+  const loadTodos = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -44,7 +40,11 @@ export function TodoList({ userId, isShared }: TodoListProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId, isShared]);
+
+  useEffect(() => {
+    loadTodos();
+  }, [userId, isShared, loadTodos]);
 
   const handleTodoUpdate = (updatedTodo: Todo) => {
     setTodos((prev) =>
@@ -99,7 +99,7 @@ export function TodoList({ userId, isShared }: TodoListProps) {
 
   if (todos.length === 0) {
     return (
-      <div className="text-center text-gray-500 py-8">
+      <div className="text-center text-gray-500 py-8 bg-gray-50 rounded-lg">
         <svg
           className="mx-auto h-12 w-12 text-gray-400"
           fill="none"

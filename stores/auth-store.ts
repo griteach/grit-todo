@@ -19,6 +19,7 @@ interface AuthState {
   ) => Promise<{ success: boolean; error?: string }>;
   signOut: () => Promise<void>;
   checkAuth: () => Promise<void>;
+  setUser: (user: { id: string; email?: string } | null) => void;
   clearError: () => void;
   updateProfile: (
     updates: Partial<{
@@ -59,7 +60,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
 
       return { success: false, error: "로그인에 실패했습니다." };
-    } catch (err) {
+    } catch (e) {
       const errorMessage = "로그인 중 오류가 발생했습니다.";
       set({ error: errorMessage, loading: false });
       return { success: false, error: errorMessage };
@@ -144,6 +145,40 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch (err) {
       console.error("인증 확인 중 오류:", err);
       set({ user: null, loading: false });
+    }
+  },
+
+  setUser: (user: { id: string; email?: string } | null) => {
+    if (user) {
+      // User 타입에 맞는 객체 생성 (최소한의 필수 속성만)
+      const userObj = {
+        id: user.id,
+        email: user.email,
+        app_metadata: {},
+        user_metadata: {},
+        aud: "authenticated",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        role: "authenticated",
+        email_confirmed_at: new Date().toISOString(),
+        phone: null,
+        confirmed_at: new Date().toISOString(),
+        last_sign_in_at: new Date().toISOString(),
+        banned_until: null,
+        reauthentication_sent_at: null,
+        recovery_sent_at: null,
+        email_change_sent_at: null,
+        phone_change_sent_at: null,
+        new_email: null,
+        new_phone: null,
+        email_change_confirm_status: null,
+        phone_change_confirm_status: null,
+        factors: null,
+        identities: [],
+      } as unknown as User;
+      set({ user: userObj, loading: false, error: null });
+    } else {
+      set({ user: null, loading: false, error: null });
     }
   },
 

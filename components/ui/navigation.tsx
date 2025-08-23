@@ -6,14 +6,31 @@ import { usePathname } from "next/navigation";
 import { useAuthStore } from "@/stores/auth-store";
 import { Button } from "./button";
 
-export function Navigation() {
+interface NavigationProps {
+  initialUser?: { id: string; email?: string } | null;
+}
+
+export function Navigation({ initialUser }: NavigationProps) {
   const pathname = usePathname();
-  const { user, loading, signOut, checkAuth } = useAuthStore();
+  const { user, loading, signOut, checkAuth, setUser } = useAuthStore();
+
+  // 초기 사용자 정보가 있으면 로딩 상태를 false로 강제 설정
+  const isActuallyLoading = initialUser ? false : loading;
 
   // 컴포넌트 마운트 시 인증 상태 확인
   useEffect(() => {
+    // 초기 사용자 정보가 있으면 즉시 설정하고 로딩 상태 해제
+    if (initialUser && !user) {
+      setUser(initialUser);
+    }
+
+    // 초기 사용자 정보가 있으면 checkAuth를 건너뛰고 즉시 로딩 완료
+    if (initialUser) {
+      return;
+    }
+
     checkAuth();
-  }, [checkAuth]);
+  }, [checkAuth, initialUser, user, setUser]);
 
   const handleLogout = async () => {
     await signOut();
@@ -52,7 +69,7 @@ export function Navigation() {
             </Link>
 
             {/* 로딩 중일 때는 스켈레톤 UI 표시 */}
-            {loading ? (
+            {isActuallyLoading ? (
               <div className="flex items-center space-x-3">
                 <div className="w-16 h-8 bg-gray-200 rounded animate-pulse"></div>
                 <div className="w-20 h-8 bg-gray-200 rounded animate-pulse"></div>
