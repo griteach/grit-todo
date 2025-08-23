@@ -20,6 +20,7 @@ interface AuthState {
   signOut: () => Promise<void>;
   checkAuth: () => Promise<void>;
   setUser: (user: { id: string; email?: string } | null) => void;
+  forceLogout: () => void;
   clearError: () => void;
   updateProfile: (
     updates: Partial<{
@@ -31,10 +32,15 @@ interface AuthState {
   ) => Promise<{ success: boolean; error?: string }>;
 }
 
-export const useAuthStore = create<AuthState>((set, get) => ({
+// 초기 상태 정의
+const initialState = {
   user: null,
   loading: true,
   error: null,
+};
+
+export const useAuthStore = create<AuthState>((set, get) => ({
+  ...initialState,
 
   signIn: async (email: string, password: string) => {
     try {
@@ -113,12 +119,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   signOut: async () => {
     try {
+      console.log("signOut 시작...");
       set({ loading: true });
-      await supabase.auth.signOut();
+
+      console.log("supabase.auth.signOut() 호출...");
+      const { error } = await supabase.auth.signOut();
+
+      if (error) {
+        console.error("Supabase 로그아웃 에러:", error);
+        throw error;
+      }
+
+      console.log("Supabase 로그아웃 성공, 상태 업데이트...");
       set({ user: null, loading: false, error: null });
+      console.log("signOut 완료");
     } catch (err) {
       console.error("로그아웃 오류:", err);
-      set({ loading: false });
+      // 에러가 발생해도 사용자 상태는 초기화
+      set({ user: null, loading: false, error: null });
     }
   },
 
@@ -149,6 +167,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   setUser: (user: { id: string; email?: string } | null) => {
+    console.log("setUser 호출됨, 파라미터:", user);
+    console.log("setUser 호출 전 store 상태:", get());
+
     if (user) {
       // User 타입에 맞는 객체 생성 (최소한의 필수 속성만)
       const userObj = {
@@ -176,14 +197,58 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         factors: null,
         identities: [],
       } as unknown as User;
+      console.log("setUser: user 객체 생성, 상태 업데이트...");
       set({ user: userObj, loading: false, error: null });
     } else {
-      set({ user: null, loading: false, error: null });
+      console.log("setUser: user를 null로 설정, 상태 업데이트...");
+      // 완전히 초기 상태로 리셋 (loading: false로 설정)
+      set(() => ({
+        ...initialState,
+        loading: false,
+      }));
+
+      // 추가 확인용 로그
+      setTimeout(() => {
+        console.log("setTimeout 후 store 상태:", get());
+      }, 100);
     }
+
+    console.log("setUser 완료 후 store 상태:", get());
   },
 
   clearError: () => {
     set({ error: null });
+  },
+
+  // 강제 로그아웃 함수 추가
+  forceLogout: () => {
+    console.log("forceLogout 호출됨");
+    console.log("forceLogout 전 상태:", get());
+
+    // 완전히 새로운 상태 객체 생성
+    const newState = {
+      user: null,
+      loading: false,
+      error: null,
+    };
+
+    console.log("새로운 상태 객체:", newState);
+
+    // 여러 방법으로 상태 업데이트 시도
+    set(() => newState);
+
+    // 즉시 확인
+    const afterSet = get();
+    console.log("set() 직후 상태:", afterSet);
+
+    // 여전히 null이 아니면 강제로 다시 시도
+    if (afterSet.user !== null) {
+      console.log("⚠️ 첫 번째 시도 실패, 다시 시도...");
+      set(newState); // 객체 직접 전달
+
+      const finalState = get();
+      console.log("최종 상태:", finalState);
+    }
   },
 
   updateProfile: async (updates) => {

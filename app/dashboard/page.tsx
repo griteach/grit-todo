@@ -26,7 +26,8 @@ export default async function Dashboard() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
           <p className="mt-2 text-gray-600">
-            안녕하세요, {user.email}님! 오늘의 할 일을 관리해보세요.
+            안녕하세요, {user.user_metadata.full_name}님! 오늘의 할 일을
+            관리해보세요.
           </p>
         </div>
 

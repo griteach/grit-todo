@@ -12,7 +12,12 @@ interface NavigationProps {
 
 export function Navigation({ initialUser }: NavigationProps) {
   const pathname = usePathname();
-  const { user, loading, signOut, checkAuth, setUser } = useAuthStore();
+
+  const { user, loading, signOut, checkAuth, setUser, forceLogout } =
+    useAuthStore();
+
+  // 디버깅: store 상태 확인
+  console.log("Navigation - useAuthStore 상태:", { user, loading });
 
   // 초기 사용자 정보가 있으면 로딩 상태를 false로 강제 설정
   const isActuallyLoading = initialUser ? false : loading;
@@ -33,8 +38,52 @@ export function Navigation({ initialUser }: NavigationProps) {
   }, [checkAuth, initialUser, user, setUser]);
 
   const handleLogout = async () => {
-    await signOut();
-    window.location.href = "/";
+    try {
+      console.log("로그아웃 시작...");
+      console.log("현재 user 상태:", user);
+
+      await signOut();
+      console.log("로그아웃 완료, 홈페이지로 이동");
+      console.log("signOut 후 user 상태:", user);
+
+      // 강제로 사용자 상태를 null로 설정 (이중 안전장치)
+      console.log("setUser(null) 호출...");
+      setUser(null);
+      console.log("setUser(null) 후 user 상태:", user);
+
+      // 추가 안전장치: forceLogout 호출
+      console.log("forceLogout 호출...");
+      forceLogout();
+
+      // 즉시 store 상태 확인 (user 변수가 아닌 실제 store 상태)
+      const currentState = useAuthStore.getState();
+      console.log("forceLogout 후 실제 store 상태:", currentState);
+      console.log("forceLogout 후 user 변수 상태:", user);
+
+      // 강제로 컴포넌트 리렌더링을 위한 상태 업데이트
+      if (currentState.user !== null) {
+        console.log(
+          "⚠️ store 상태가 여전히 null이 아님, 강제 업데이트 시도..."
+        );
+        // 한 번 더 시도
+        forceLogout();
+        const finalState = useAuthStore.getState();
+        console.log("최종 store 상태:", finalState);
+      }
+
+      // 강제 새로고침으로 모든 상태 초기화
+      console.log("페이지 강제 새로고침으로 완전 초기화...");
+      window.location.href = "/";
+    } catch (error) {
+      console.error("로그아웃 중 오류:", error);
+      // 에러가 발생해도 로그아웃 상태로 설정하고 홈페이지로 이동
+      console.log("에러 발생으로 로그아웃 상태 설정, 홈페이지로 이동");
+      setUser(null);
+
+      // 에러 발생 시에도 강제 새로고침
+      console.log("에러 발생, 페이지 강제 새로고침...");
+      window.location.href = "/";
+    }
   };
 
   return (
@@ -92,13 +141,13 @@ export function Navigation({ initialUser }: NavigationProps) {
                       <span className="text-sm text-gray-700">
                         {user.email}
                       </span>
-                      <Button
+                      <button
                         onClick={handleLogout}
-                        variant="outline"
-                        size="sm"
+                        type="button"
+                        className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 hover:text-gray-900 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                       >
                         로그아웃
-                      </Button>
+                      </button>
                     </div>
                   </>
                 ) : (
